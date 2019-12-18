@@ -28,7 +28,7 @@ end
 
 L1 = 0.3 # リンク1
 L2 = 0.3 # リンク2
-k = 0.5 # 収束比例定数
+k = 0.2 # 収束比例定数
 number_of_steps = 20 # 計算回数
 r = N[[0.3,0.4]] # 目標位置
 th = deg2rad(N[[30,30]]) # 初期関節角度
@@ -38,6 +38,9 @@ orbit_y = []
 g.push(rad2deg(th))
 
 number_of_steps.times do
+  orbit_x.push([0,L1 * Math.cos(th[0]),L1 * Math.cos(th[0]) + L2 * Math.cos(th[0] + th[1])])
+  orbit_y.push([0,L1 * Math.sin(th[0]),L1 * Math.sin(th[0]) + L2 * Math.sin(th[0] + th[1])])
+
   pe = f(th) # 順運動学計算
 
   # 偏角計算
@@ -47,17 +50,15 @@ number_of_steps.times do
   th = th + dT.transpose
 
   g.push(rad2deg(th))
-
-  orbit_x.push([0,L1 * Math.cos(th[0]),L1 * Math.cos(th[0]) + L2 * Math.cos(th[0] + th[1])])
-  orbit_y.push([0,L1 * Math.sin(th[0]),L1 * Math.sin(th[0]) + L2 * Math.sin(th[0] + th[1])])
 end
 
 # 結果の出力
-puts rad2deg(th),f(th)
+puts "[θ1,θ2] = #{rad2deg(th)}"
+puts "[px,py] = #{f(th)}"
 
 Gnuplot.open do |gp|
   Gnuplot::Plot.new(gp) do |plot|
-
+    plot.terminal "png"
     plot.output "arm.png"
 
     x = [0,L1 * Math.cos(th[0]),L1 * Math.cos(th[0]) + L2 * Math.cos(th[0] + th[1])]
@@ -75,6 +76,7 @@ end
 Gnuplot.open do |gp|
   Gnuplot::Plot.new(gp) do |plot|
     plot.key "under"
+    plot.terminal "png"
     plot.output "theta.png"
 
     steps = (0..number_of_steps).to_a
@@ -82,20 +84,20 @@ Gnuplot.open do |gp|
     plot.data << Gnuplot::DataSet.new([steps, g.map{|row| row[0]}]) do |ds|
       ds.with      = "linespoints"
       ds.linewidth = 3
-      ds.title = "θ1"
+      ds.title = "theta 1"
     end
 
     plot.data << Gnuplot::DataSet.new([steps, g.map{|row| row[1]}]) do |ds|
       ds.with      = "linespoints"
       ds.linewidth = 3
-      ds.title = "θ2"
+      ds.title = "theta 2"
     end
   end
 end
 
 Gnuplot.open do |gp|
   Gnuplot::Plot.new(gp) do |plot|
-
+    plot.terminal "png"
     plot.output "arm_orbit.png"
 
     orbit_x.size.times do |i|
